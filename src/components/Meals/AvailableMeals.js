@@ -32,12 +32,20 @@ import { useEffect, useState } from 'react';
 
 const AvailableMeals = () => {
   const [meals, setMeals] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchMeals = async () => {
+      setIsLoading(true);
       const response = await fetch(
         'https://react-http-requests-24eb5-default-rtdb.firebaseio.com/meals.json'
       );
+
+      if (!response.ok) {
+        throw new Error('Sth went wrong....');
+      }
+
       const data = await response.json();
       console.log(data);
 
@@ -52,11 +60,16 @@ const AvailableMeals = () => {
         });
       }
       setMeals(loadedMeals);
+      setIsLoading(false);
       console.log(loadedMeals);
     };
 
-    fetchMeals();
+    fetchMeals().catch(error => {
+      setIsLoading(false);
+      setError(error.message);
+    });
   }, []);
+  // cannot use try-catch => because the async functin always return promise, need to use .then() or .catch() to handle resolve or error.
 
   ////////////////////////////////////////////////////////////////////////
   //still need async function to get data first, then use data
@@ -83,6 +96,22 @@ const AvailableMeals = () => {
   //   });
   // }
   // console.log(loadedMeals);
+
+  if (isLoading) {
+    return (
+      <section className={classes.mealsLoading}>
+        <p>Loading....</p>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className={classes.mealsError}>
+        <p>{error}</p>
+      </section>
+    );
+  }
 
   const mealsList = meals.map(meal => (
     <MealItem
